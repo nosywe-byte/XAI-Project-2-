@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User Story Map</title>
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --ink: #1d1d1f;
+    --muted: #6b6b72;
+    --line: #e3e1db;
+    --label: #d0473f;
+    --goal-bg: #fff5dc;
+    --goal-line: #ecd08a;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17171a; --surface: #222226; --ink: #ececef; --muted: #a0a0a8;
+      --line: #34343a; --label: #ff7a70; --goal-bg: #3a3220; --goal-line: #6b5a2e;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17171a; --surface: #222226; --ink: #ececef; --muted: #a0a0a8;
+    --line: #34343a; --label: #ff7a70; --goal-bg: #3a3220; --goal-line: #6b5a2e;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .page { max-width: 1280px; margin: 0 auto; padding: 32px 16px 48px; }
+
+  header .kicker {
+    font-size: 12px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--label);
+  }
+  header h1 { margin: 4px 0 24px; font-size: 30px; letter-spacing: -.01em; }
+
+  .label {
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--label); margin-bottom: 6px;
+  }
+
+  /* Top: user, goal, solution */
+  .top { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 28px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow);
+  }
+  .user-name { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--ink); color: var(--bg); font-size: 15px; font-weight: 700; flex: none;
+  }
+  .user-desc { color: var(--muted); margin-top: 6px; }
+  .card.goal { background: var(--goal-bg); border-color: var(--goal-line); font-weight: 600; }
+  .card.solution p { margin: 0; color: var(--muted); }
+
+  /* Board */
+  .board-wrap { overflow-x: auto; padding-bottom: 8px; }
+  .board {
+    display: grid;
+    grid-template-columns: 92px repeat(var(--cols), minmax(210px, 1fr));
+    column-gap: 30px; row-gap: 16px;
+    min-width: calc(92px + var(--cols) * 240px);
+  }
+  .rail { padding-top: 12px; }
+  .rail .label { writing-mode: horizontal-tb; }
+
+  .activity {
+    position: relative; background: var(--hue); color: #fff;
+    border-radius: 12px; padding: 14px 16px 16px; box-shadow: var(--shadow);
+    min-height: 92px;
+  }
+  .activity .step { font-size: 12px; font-weight: 700; opacity: .8; letter-spacing: .08em; }
+  .activity .name { font-size: 18px; font-weight: 750; margin-top: 2px; line-height: 1.2; }
+  .activity:not(.last)::after {
+    content: ""; position: absolute; right: -24px; top: 50%;
+    width: 18px; height: 2px; background: var(--muted); opacity: .6;
+  }
+  .activity:not(.last)::before {
+    content: ""; position: absolute; right: -25px; top: calc(50% - 4px);
+    border: 5px solid transparent; border-left-color: var(--muted); opacity: .6;
+    transform: translateX(6px);
+  }
+
+  .tasks { display: flex; flex-direction: column; gap: 10px; }
+  .task {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 4px solid var(--hue); border-radius: 10px;
+    padding: 10px 12px; box-shadow: var(--shadow);
+  }
+  .task .t-title { font-weight: 600; }
+  .task .t-detail { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
+
+  footer { margin-top: 28px; color: var(--muted); font-size: 13px; }
+
+  @media print {
+    body { background: #fff; }
+    .board-wrap { overflow: visible; }
+  }
+</style>
+</head>
+<body>
+<div class="page" id="app"></div>
+
+<script>
+/* ============================================================
+   KUN DETTE OBJEKT SKAL ÆNDRES. Resten af filen er designet.
+   ============================================================ */
+const MAP = {
+  title: "Diabetes Risk Test – Diabetes Patients Rule Forever",
+  user: {
+    name: "Patient",
+    description: "A person who is worried about, or curious about, their risk of developing diabetes."
+  },
+  goal: "Understand their personal diabetes risk prediction and what they can do to potentially lower it.",
+  solution: "A machine learning model takes the patient's lifestyle and health data as input and returns a risk prediction, the factors that mattered most, and advice on how to lower the risk.",
+  activities: [
+    {
+      name: "Take the test",
+      tasks: [
+        { title: "Understand what the test is", detail: "A risk prediction, not a diagnosis, and how my data is used" },
+        { title: "Gather required information", detail: "Lifestyle and health data, e.g. weight, blood pressure, activity level, diet, family history" },
+        { title: "Enter my data" },
+        { title: "Get my prediction" }
+      ]
+    },
+    {
+      name: "Understand results",
+      tasks: [
+        { title: "See my risk level", detail: "Shown clearly, e.g. low / medium / high or as a percentage" },
+        { title: "See which factors mattered most", detail: "With a visualization of how much each factor contributed" },
+        { title: "Understand what the result means for me", detail: "Including how certain the prediction is" },
+        { title: "Know if I should see a doctor" }
+      ]
+    },
+    {
+      name: "Take action",
+      tasks: [
+        { title: "Get recommendations based on my factors", detail: "Focused on the factors I can change" },
+        { title: "Acknowledge my bad habits" },
+        { title: "Choose changes that fit my life", detail: "Small, realistic steps" },
+        { title: "Make lifestyle changes" }
+      ]
+    },
+    {
+      name: "Follow up",
+      tasks: [
+        { title: "Retake the test", detail: "With updated health and lifestyle data" },
+        { title: "Compare with my earlier result", detail: "See if my risk and factors have changed" },
+        { title: "Adjust my plan", detail: "Keep what works, change what doesn't" }
+      ]
+    }
+  ],
+  // Valgfrit: overskrifter på et andet sprog
+  labels: { kicker: "User Story Map", user: "User", goal: "Goal", solution: "Solution", activities: "Activities", tasks: "Tasks" }
+};
+/* ============================================================ */
+
+const HUES = ["#3b5bab", "#2c8a6a", "#c0682f", "#7a4fa8", "#b8455b", "#2f88a3", "#6b7a2a"];
+const L = Object.assign(
+  { kicker: "User Story Map", user: "User", goal: "Goal", solution: "Solution", activities: "Activities", tasks: "Tasks" },
+  MAP.labels || {}
+);
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+document.title = L.kicker + " – " + MAP.title;
+const app = document.getElementById("app");
+
+// Header
+const header = el("header");
+header.append(el("div", "kicker", L.kicker), el("h1", null, MAP.title));
+app.append(header);
+
+// Top row
+const topRow = el("section", "top");
+
+const userCard = el("div", "card");
+userCard.append(el("div", "label", L.user));
+const nameRow = el("div", "user-name");
+nameRow.append(el("span", "avatar", MAP.user.name.charAt(0).toUpperCase()), el("span", null, MAP.user.name));
+userCard.append(nameRow);
+if (MAP.user.description) userCard.append(el("div", "user-desc", MAP.user.description));
+topRow.append(userCard);
+
+const goalCard = el("div", "card goal");
+goalCard.append(el("div", "label", L.goal), el("div", null, MAP.goal));
+topRow.append(goalCard);
+
+if (MAP.solution) {
+  const sol = el("div", "card solution");
+  sol.append(el("div", "label", L.solution), el("p", null, MAP.solution));
+  topRow.append(sol);
+}
+app.append(topRow);
+
+// Board
+const wrap = el("section", "board-wrap");
+const board = el("div", "board");
+board.style.setProperty("--cols", MAP.activities.length);
+
+const railA = el("div", "rail"); railA.append(el("div", "label", L.activities));
+board.append(railA);
+MAP.activities.forEach((a, i) => {
+  const card = el("div", "activity" + (i === MAP.activities.length - 1 ? " last" : ""));
+  card.style.setProperty("--hue", HUES[i % HUES.length]);
+  card.append(el("div", "step", String(i + 1).padStart(2, "0")), el("div", "name", a.name));
+  board.append(card);
+});
+
+const railT = el("div", "rail"); railT.append(el("div", "label", L.tasks));
+board.append(railT);
+MAP.activities.forEach((a, i) => {
+  const col = el("div", "tasks");
+  col.style.setProperty("--hue", HUES[i % HUES.length]);
+  a.tasks.forEach(t => {
+    const card = el("div", "task");
+    card.append(el("div", "t-title", t.title));
+    if (t.detail) card.append(el("div", "t-detail", t.detail));
+    col.append(card);
+  });
+  board.append(col);
+});
+
+wrap.append(board);
+app.append(wrap);
+</script>
+</body>
+</html>
